@@ -9,7 +9,7 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
 import { UserNav } from "@/components/user-nav"
 import { Toaster } from "@/components/ui/toaster"
-import { cn } from "@/lib/utils"
+import { cn } from "@/src/lib/utils"
 import { useAuth } from "@/src/contexts/AuthContext"
 import { Loader2 } from "lucide-react"
 
@@ -24,12 +24,41 @@ export default function DashboardLayout({
   const router = useRouter()
   const { user, isLoading } = useAuth()
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+
   // Redirect to login if not authenticated
   useEffect(() => {
+    console.log('Dashboard layout auth check:', {
+      isLoading,
+      hasUser: !!user,
+      userEmail: user?.email
+    });
+
     if (!isLoading && !user) {
-      router.push('/login')
+      console.log('No user found, redirecting to login...');
+      router.push('/login');
     }
   }, [user, isLoading, router])
+
+  // Check if mobile and handle resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Close sidebar on mobile when route changes
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false)
+    }
+  }, [pathname, isMobile])
+
+  // NOW WE CAN HAVE CONDITIONAL RETURNS AFTER ALL HOOKS
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -45,23 +74,6 @@ export default function DashboardLayout({
   if (!user) {
     return null
   }
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
-
-  useEffect(() => {
-    // Close sidebar on mobile when route changes
-    if (isMobile) {
-      setSidebarOpen(false)
-    }
-  }, [pathname, isMobile])
 
   return (
     <div className="flex min-h-screen flex-col">

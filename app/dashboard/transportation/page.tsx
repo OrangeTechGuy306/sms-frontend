@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/src/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card';
-import { Badge } from '@/src/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/src/components/ui/data-table';
 import { transportationApi } from '@/src/lib/api';
-import { toast } from '@/src/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { Plus, Edit, Trash2, MapPin, Bus, User, Route, Loader2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -65,7 +65,7 @@ export default function TransportationPage() {
         page: 1,
         limit: 50,
         sort_by: 'route_name',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       });
       setRoutes(response.data);
     } catch (error) {
@@ -87,7 +87,7 @@ export default function TransportationPage() {
         page: 1,
         limit: 50,
         sort_by: 'bus_number',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       });
       setBuses(response.data);
     } catch (error) {
@@ -109,7 +109,7 @@ export default function TransportationPage() {
         page: 1,
         limit: 50,
         sort_by: 'first_name',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       });
       setDrivers(response.data);
     } catch (error) {

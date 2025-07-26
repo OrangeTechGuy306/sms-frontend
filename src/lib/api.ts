@@ -37,11 +37,30 @@ api.interceptors.response.use(
 
     // Handle specific error codes
     if (error.response?.status === 401) {
-      // Unauthorized - clear token and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        window.location.href = '/login';
+      const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+      const isProfileRequest = error.config?.url?.includes('/auth/profile');
+      const isDashboardRequest = error.config?.url?.includes('/analytics/dashboard');
+
+      console.error('401 Unauthorized error:', {
+        url: error.config?.url,
+        isLoginPage,
+        isProfileRequest,
+        isDashboardRequest,
+        hasToken: !!localStorage.getItem('auth_token')
+      });
+
+      // Don't redirect immediately for dashboard requests - let the component handle it
+      if (!isLoginPage && !isProfileRequest && !isDashboardRequest) {
+        console.log('Redirecting to login due to 401 error');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user_data');
+          window.location.href = '/login';
+        }
+      } else if (isDashboardRequest) {
+        console.warn('Dashboard request failed with 401 - token might be invalid');
+        // For dashboard requests, just reject the promise without redirecting
+        // Let the dashboard component handle the error
       }
       return Promise.reject(error);
     }

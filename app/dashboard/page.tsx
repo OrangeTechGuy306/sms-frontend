@@ -17,7 +17,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAuth } from '@/src/contexts/AuthContext';
-import { analyticsApi } from '@/lib/api';
+import { analyticsApi } from '@/src/lib/api';
 
 interface DashboardStats {
   total_students: number;
@@ -40,7 +40,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,18 +48,36 @@ export default function DashboardPage() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+
+        // Ensure we have a valid token before making the request
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          console.warn('No auth token found, skipping dashboard data fetch');
+          return;
+        }
+
+        // Add a delay to ensure authentication is fully initialized
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        console.log('Fetching dashboard data with token:', token.substring(0, 20) + '...');
         const response = await analyticsApi.getDashboard();
 
         // Handle both wrapped and direct response formats
         const data = (response as any).data || response;
         setStats(data as DashboardStats);
-      } catch (error) {
+        console.log('Dashboard data fetched successfully:', data);
+      } catch (error: any) {
         console.error('Error fetching dashboard data:', error);
 
-        // Show a less intrusive error message
-        console.warn('Dashboard data unavailable, using fallback data');
+        // Check if it's an authentication error
+        if (error.response?.status === 401) {
+          console.error('Authentication failed for dashboard data - this might cause logout');
+          // Don't set fallback data for auth errors, let the auth system handle it
+          return;
+        }
 
-        // Fallback data - don't show error toast for better UX
+        console.warn('Dashboard data unavailable, using fallback data');
+        // Fallback data for non-auth errors
         setStats({
           total_students: 0,
           total_teachers: 0,
@@ -84,8 +102,11 @@ export default function DashboardPage() {
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    // Only fetch dashboard data if user is authenticated and not loading
+    if (user && !authLoading) {
+      fetchDashboardData();
+    }
+  }, [user, authLoading]);
 
   if (loading) {
     return (

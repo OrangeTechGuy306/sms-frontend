@@ -67,14 +67,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           
           // Verify token is still valid by fetching profile
           try {
-            const profile = await authApi.getProfile();
-            setUser(profile);
+            const profileResponse = await authApi.getProfile();
+            // Handle the nested response structure from backend
+            const userData = profileResponse.user || profileResponse;
+
+            // Merge with stored user data to preserve all fields
+            const mergedUser = {
+              ...JSON.parse(storedUser),
+              ...userData,
+              // Ensure we have the required fields
+              first_name: userData.first_name || JSON.parse(storedUser).first_name || '',
+              last_name: userData.last_name || JSON.parse(storedUser).last_name || ''
+            };
+
+            setUser(mergedUser);
+            // Update localStorage with fresh data
+            localStorage.setItem('user_data', JSON.stringify(mergedUser));
           } catch (error) {
-            // Token is invalid, clear auth state
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('user_data');
-            setToken(null);
-            setUser(null);
+            console.warn('Profile verification failed, but keeping stored user data:', error);
+            // Don't immediately logout on profile fetch failure
+            // The stored token might still be valid, just the profile endpoint might be having issues
           }
         }
       } catch (error) {
@@ -90,19 +102,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
+      console.log('Starting login process for:', email);
+
       const response = await authApi.login({ email, password });
-      
+      console.log('Login response received:', response);
+
       if (response.success) {
         const { token: authToken, user: userData } = response.data;
-        
+
+        console.log('Login successful, storing token and user data:', {
+          tokenLength: authToken?.length,
+          userData: userData
+        });
+
         // Store in localStorage
         localStorage.setItem('auth_token', authToken);
         localStorage.setItem('user_data', JSON.stringify(userData));
-        
+
         // Update state
         setToken(authToken);
         setUser(userData);
-        
+
+        console.log('Auth state updated successfully');
+
         toast({
           title: "Login Successful",
           description: `Welcome back, ${userData.first_name}!`,

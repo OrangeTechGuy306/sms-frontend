@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/src/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { Badge } from "@/src/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/src/components/ui/data-table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { attendanceApi } from "@/src/lib/api"
-import { toast } from "@/src/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import { Download, UserCheck, UserX, Calendar, Loader2, Plus } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 

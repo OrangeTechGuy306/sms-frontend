@@ -54,7 +54,7 @@ export default function FeesPage() {
         limit,
         search,
         sort_by: 'created_at',
-        sort_order: 'desc'
+        sort_order: 'DESC'
       })
 
       setFees(response.data as FeeRecord[])

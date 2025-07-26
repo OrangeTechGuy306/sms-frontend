@@ -62,7 +62,7 @@ export default function TimetablesPage() {
         page: 1,
         limit: 50,
         sort_by: 'created_at',
-        sort_order: 'desc'
+        sort_order: 'DESC'
       });
       setTimetables(response.data);
     } catch (error) {

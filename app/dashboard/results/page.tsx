@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Badge } from "@/src/components/ui/badge"
-import { Button } from "@/src/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { DataTable } from "@/src/components/ui/data-table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AddResultModal } from "@/components/modals/add-result-modal"
 import { DeleteConfirmationModal } from "@/components/modals/delete-confirmation-modal"
 import { resultsApi } from "@/src/lib/api"
-import { toast } from "@/src/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import { PlusCircle, FileDown, Edit, Trash2, BarChart3, TrendingUp, Award, Loader2 } from "lucide-react"
 import type { ColumnDef } from "@tanstack/react-table"
 
@@ -79,7 +79,7 @@ export default function ResultsPage() {
         term_id: selectedTerm !== 'all' ? selectedTerm : undefined,
         class_id: selectedClass !== 'all' ? selectedClass : undefined,
         sort_by: 'created_at',
-        sort_order: 'desc'
+        sort_order: 'DESC'
       })
 
       setResults(response.data as Result[])

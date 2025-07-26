@@ -53,7 +53,7 @@ export const studentSchema = z.object({
   guardian_name: z.string().min(2, 'Guardian name is required'),
   guardian_phone: phoneSchema,
   guardian_email: emailSchema.optional(),
-  current_class_id: z.string().uuid('Please select a valid class'),
+  class_id: z.string().uuid('Please select a valid class'),
   admission_date: z.string().min(1, 'Admission date is required'),
   blood_group: z.string().optional(),
   medical_conditions: z.string().optional(),

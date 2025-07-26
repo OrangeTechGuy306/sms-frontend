@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { PlusCircle, FileDown, FileUp, MoreHorizontal, Trash2, Edit, Eye, Loader2 } from "lucide-react"
-import { Button } from "@/src/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { DataTable } from "@/src/components/ui/data-table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { Badge } from "@/src/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { AddClassModal } from "@/components/modals/add-class-modal"
 import { EditClassModal } from "@/components/modals/edit-class-modal"
 import { DeleteConfirmationModal } from "@/components/modals/delete-confirmation-modal"
 import { classesApi } from "@/src/lib/api"
-import { toast } from "@/src/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import type { ColumnDef } from "@tanstack/react-table"
 
 interface Class {
@@ -55,7 +55,7 @@ export default function ClassesPage() {
         limit,
         search,
         sort_by: 'name',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       })
 
       setClasses(response.data)

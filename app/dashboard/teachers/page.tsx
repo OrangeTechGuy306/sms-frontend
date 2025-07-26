@@ -2,19 +2,19 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/src/components/ui/button"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card"
-import { Checkbox } from "@/src/components/ui/checkbox"
-import { Badge } from "@/src/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/src/components/ui/data-table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { ColumnDef } from "@tanstack/react-table"
 import { DeleteConfirmationModal } from "@/components/modals/delete-confirmation-modal"
 import { BulkDeleteConfirmationModal } from "@/components/modals/bulk-delete-confirmation-modal"
 import { AddTeacherModal } from "@/components/modals/add-teacher-modal"
 import { EditTeacherModal } from "@/components/modals/edit-teacher-modal"
 import { teachersApi } from "@/src/lib/api"
-import { toast } from "@/src/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import { Download, Eye, Pencil, Plus, Printer, Trash2, Upload, Loader2 } from "lucide-react"
 
 interface Teacher {
@@ -60,7 +60,7 @@ export default function TeachersPage() {
         limit,
         search,
         sort_by: 'first_name',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       })
 
       setTeachers(response.data)

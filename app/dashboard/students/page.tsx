@@ -32,7 +32,7 @@ interface Student {
   guardian_name: string
   guardian_phone: string
   guardian_email?: string
-  current_class_id: string
+  class_id: string
   admission_date: string
   blood_group?: string
   medical_conditions?: string
@@ -65,7 +65,7 @@ export default function StudentsPage() {
         limit,
         search,
         sort_by: 'first_name',
-        sort_order: 'asc'
+        sort_order: 'ASC'
       })
 
       setStudents(response.data)

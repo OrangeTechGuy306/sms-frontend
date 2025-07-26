@@ -9,7 +9,7 @@ import { AnalyticsOverview } from "@/components/analytics/analytics-overview"
 import { AttendanceChart } from "@/components/analytics/attendance-chart"
 import { GradeDistribution } from "@/components/analytics/grade-distribution"
 import { SubjectPerformance } from "@/components/analytics/subject-performance"
-import { analyticsApi } from "@/lib/api"
+import { analyticsApi } from "@/src/lib/api"
 import { toast } from "@/components/ui/use-toast"
 import { Download, Loader2, TrendingUp, Users, GraduationCap, DollarSign, Calendar, BarChart3 } from "lucide-react"
 

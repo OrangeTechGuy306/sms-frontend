@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from "@/src/components/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -14,13 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/src/components/ui/dialog"
-import { Input } from "@/src/components/ui/input"
-import { Label } from "@/src/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FileUpload } from "@/src/components/ui/file-upload"
 import { studentSchema, type StudentFormData } from "@/src/lib/validations"
-import { classesApi } from "@/lib/api"
+import { classesApi } from "@/src/lib/api"
 import { Loader2, Plus } from "lucide-react"
 
 interface AddStudentModalProps {
@@ -114,14 +114,14 @@ export function AddStudentModal({ onAdd, trigger }: AddStudentModalProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="current_class_id">Class</Label>
-              <Select onValueChange={(value) => setValue('current_class_id', value)}>
-                <SelectTrigger className={errors.current_class_id ? 'border-red-500' : ''}>
+              <Label htmlFor="class_id">Class</Label>
+              <Select onValueChange={(value) => setValue('class_id', value)}>
+                <SelectTrigger className={errors.class_id ? 'border-red-500' : ''}>
                   <SelectValue placeholder={loadingClasses ? "Loading classes..." : "Select class"} />
                 </SelectTrigger>
                 <SelectContent>
                   {loadingClasses ? (
-                    <SelectItem value="" disabled>Loading classes...</SelectItem>
+                    <SelectItem value="loading" disabled>Loading classes...</SelectItem>
                   ) : classes.length > 0 ? (
                     classes.map((cls) => (
                       <SelectItem key={cls.uuid} value={cls.uuid}>
@@ -129,12 +129,12 @@ export function AddStudentModal({ onAdd, trigger }: AddStudentModalProps) {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="" disabled>No classes available</SelectItem>
+                    <SelectItem value="no-classes" disabled>No classes available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
-              {errors.current_class_id && (
-                <p className="text-sm text-red-600">{errors.current_class_id.message}</p>
+              {errors.class_id && (
+                <p className="text-sm text-red-600">{errors.class_id.message}</p>
               )}
             </div>
           </div>
@@ -208,7 +208,7 @@ export function AddStudentModal({ onAdd, trigger }: AddStudentModalProps) {
 
             <div className="space-y-2">
               <Label htmlFor="gender">Gender</Label>
-              <Select onValueChange={(value) => setValue('gender', value as any)}>
+              <Select onValueChange={(value) => setValue('gender', value as any)} defaultValue="male">
                 <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
