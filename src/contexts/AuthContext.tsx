@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authApi } from '@/lib/api';
+import { authApi } from '@/src/lib/api';
 import { toast } from '@/components/ui/use-toast';
 
 interface User {
@@ -57,19 +57,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize auth state from localStorage
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('Initializing auth context...');
+
       try {
         const storedToken = localStorage.getItem('auth_token');
         const storedUser = localStorage.getItem('user_data');
 
+        console.log('Stored auth data:', {
+          hasToken: !!storedToken,
+          hasUser: !!storedUser,
+          tokenLength: storedToken?.length
+        });
+
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
-          
+
           // Verify token is still valid by fetching profile
           try {
+            console.log('Verifying token with profile fetch...');
             const profileResponse = await authApi.getProfile();
+            console.log('Profile response:', profileResponse);
+
             // Handle the nested response structure from backend
-            const userData = profileResponse.user || profileResponse;
+            const userData = profileResponse.user || profileResponse.data || profileResponse;
 
             // Merge with stored user data to preserve all fields
             const mergedUser = {
@@ -83,20 +94,69 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(mergedUser);
             // Update localStorage with fresh data
             localStorage.setItem('user_data', JSON.stringify(mergedUser));
+            console.log('Auth initialization successful with profile verification');
           } catch (error) {
-            console.warn('Profile verification failed, but keeping stored user data:', error);
-            // Don't immediately logout on profile fetch failure
-            // The stored token might still be valid, just the profile endpoint might be having issues
+            console.warn('Profile verification failed:', error);
+
+            // Check if it's a network error (backend not running)
+            if (!error?.response) {
+              console.log('Network error - backend might not be running. Keeping stored user data for offline mode.');
+              // Keep the user logged in with stored data if it's a network error
+              toast({
+                title: "Connection Issue",
+                description: "Unable to verify authentication with server. Using offline mode.",
+                variant: "destructive",
+              });
+            } else if (error?.response?.status === 401 || error?.response?.status === 403) {
+              console.log('Token is invalid, clearing auth data');
+              localStorage.removeItem('auth_token');
+              localStorage.removeItem('user_data');
+              setToken(null);
+              setUser(null);
+              toast({
+                title: "Session Expired",
+                description: "Please log in again.",
+                variant: "destructive",
+              });
+            } else {
+              console.log('Server error during profile verification, keeping stored user data');
+              // For other server errors (500, etc.), keep the user logged in
+              toast({
+                title: "Server Issue",
+                description: "Authentication server is having issues. Using cached data.",
+                variant: "destructive",
+              });
+            }
           }
+        } else {
+          console.log('No stored auth data found');
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        // Clear potentially corrupted data
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        setToken(null);
+        setUser(null);
       } finally {
+        console.log('Auth initialization complete, setting loading to false');
         setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    // Add a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn('Auth initialization timeout, forcing loading to false');
+      setIsLoading(false);
+    }, 10000); // 10 second timeout
+
+    initializeAuth().finally(() => {
+      clearTimeout(timeoutId);
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {

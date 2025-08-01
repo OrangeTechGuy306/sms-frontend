@@ -64,12 +64,25 @@ const dummyAcademicYears = ["2023-2024", "2024-2025", "2025-2026"]
 
 export function EditClassModal({ open, onOpenChange, onEdit, initialData }: EditClassModalProps) {
   const { toast } = useToast()
-  const [formData, setFormData] = useState<ClassData>(initialData)
+  const [formData, setFormData] = useState<ClassData>({
+    ...initialData,
+    subjects: initialData.subjects || [] // Ensure subjects is always an array
+  })
   const [newSubject, setNewSubject] = useState("")
 
   useEffect(() => {
     if (open) {
-      setFormData(initialData)
+      // Debug: Log the initial data structure
+      console.log('EditClassModal - Initial data:', initialData)
+
+      // Ensure subjects array is always initialized
+      const formDataWithSubjects = {
+        ...initialData,
+        subjects: initialData.subjects || []
+      }
+
+      console.log('EditClassModal - Form data after processing:', formDataWithSubjects)
+      setFormData(formDataWithSubjects)
     }
   }, [open, initialData])
 
@@ -87,13 +100,14 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
   }
 
   const addSubject = () => {
-    if (newSubject && !formData.subjects.includes(newSubject)) {
+    const subjects = formData.subjects || []
+    if (newSubject && !subjects.includes(newSubject)) {
       setFormData((prev) => ({
         ...prev,
-        subjects: [...prev.subjects, newSubject],
+        subjects: [...subjects, newSubject],
       }))
       setNewSubject("")
-    } else if (formData.subjects.includes(newSubject)) {
+    } else if (subjects.includes(newSubject)) {
       toast({
         title: "Duplicate Subject",
         description: "This subject has already been added.",
@@ -103,42 +117,47 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
   }
 
   const removeSubject = (subjectToRemove: string) => {
+    const subjects = formData.subjects || []
     setFormData((prev) => ({
       ...prev,
-      subjects: prev.subjects.filter((subject) => subject !== subjectToRemove),
+      subjects: subjects.filter((subject) => subject !== subjectToRemove),
     }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Basic validation
+    // Debug: Log form data before validation
+    console.log('🔍 Form submission - Current form data:', formData)
+    console.log('🔍 Form validation checks:', {
+      name: { value: formData.name, valid: !!formData.name },
+      level: { value: formData.level, valid: !!formData.level },
+      capacity: { value: formData.capacity, valid: formData.capacity > 0 },
+      room: { value: formData.room, valid: !!formData.room },
+      academicYear: { value: formData.academicYear, valid: !!formData.academicYear }
+    })
+
+    // Basic validation - only check essential fields
     if (
       !formData.name ||
       !formData.level ||
-      !formData.section ||
       formData.capacity <= 0 ||
-      !formData.classTeacher ||
       !formData.room ||
-      !formData.schedule ||
       !formData.academicYear
     ) {
+      console.log('❌ Validation failed!')
       toast({
         title: "Error",
-        description: "Please fill in all required fields and ensure capacity is greater than 0.",
+        description: "Please fill in required fields: Name, Level, Capacity (>0), Room, and Academic Year.",
         variant: "destructive",
       })
       return
     }
 
-    if (formData.subjects.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please add at least one subject for the class.",
-        variant: "destructive",
-      })
-      return
-    }
+    console.log('✅ Validation passed, submitting form...')
+
+    // Note: Subjects validation removed since backend doesn't provide subjects data
+    // and it's not essential for basic class updates
 
     onEdit(formData)
     onOpenChange(false)
@@ -149,7 +168,8 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
   }
 
   const availableSubjectsForSelection = useMemo(() => {
-    return dummySubjects.filter((subject) => !formData.subjects.includes(subject))
+    const subjects = formData.subjects || []
+    return dummySubjects.filter((subject) => !subjects.includes(subject))
   }, [formData.subjects])
 
   return (
@@ -167,15 +187,33 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Class Name *</Label>
-                <Input id="name" value={formData.name} onChange={handleInputChange} placeholder="e.g., Grade 10A" />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Grade 10A"
+                  maxLength={100}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="level">Level *</Label>
-                <Input id="level" value={formData.level} onChange={handleInputChange} placeholder="e.g., Grade 10" />
+                <Input
+                  id="level"
+                  value={formData.level}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Grade 10"
+                  maxLength={20}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="section">Section *</Label>
-                <Input id="section" value={formData.section} onChange={handleInputChange} placeholder="e.g., A" />
+                <Label htmlFor="section">Section</Label>
+                <Input
+                  id="section"
+                  value={formData.section}
+                  onChange={handleInputChange}
+                  placeholder="e.g., A"
+                  maxLength={10}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="capacity">Capacity *</Label>
@@ -239,13 +277,13 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="classTeacher">Class Teacher *</Label>
+                <Label htmlFor="classTeacher">Class Teacher</Label>
                 <Select
                   value={formData.classTeacher}
                   onValueChange={(value) => handleSelectChange("classTeacher", value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select teacher" />
+                    <SelectValue placeholder="Select teacher (optional)" />
                   </SelectTrigger>
                   <SelectContent>
                     {dummyTeachers.map((teacher) => (
@@ -272,12 +310,12 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
                 </Select>
               </div>
               <div className="space-y-2 col-span-full">
-                <Label htmlFor="schedule">Schedule *</Label>
+                <Label htmlFor="schedule">Schedule</Label>
                 <Input
                   id="schedule"
                   value={formData.schedule}
                   onChange={handleInputChange}
-                  placeholder="e.g., Mon-Fri, 8:00 AM - 3:00 PM"
+                  placeholder="e.g., Mon-Fri, 8:00 AM - 3:00 PM (optional)"
                 />
               </div>
             </CardContent>
@@ -289,7 +327,7 @@ export function EditClassModal({ open, onOpenChange, onEdit, initialData }: Edit
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                {formData.subjects.map((subject) => (
+                {(formData.subjects || []).map((subject) => (
                   <Badge key={subject} variant="secondary" className="flex items-center gap-1">
                     {subject}
                     <Button

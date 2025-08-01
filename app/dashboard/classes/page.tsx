@@ -16,19 +16,25 @@ import type { ColumnDef } from "@tanstack/react-table"
 interface Class {
   id: string
   name: string
-  grade_level_id: string
-  section: string
-  academic_year_id: string
+  grade_level_id?: string
+  section?: string
+  academic_year_id?: string
   class_teacher_id?: string
   room_number?: string
   capacity: number
   description?: string
   status: string
   created_at: string
-  updated_at: string
-  grade_level_name?: string
+  updated_at?: string
+  // Backend response fields
+  grade_level?: string // This is what backend returns
+  level_number?: number
   class_teacher_name?: string
   academic_year?: string
+  student_count?: number // This is what backend returns
+  subject_count?: number // This is what backend returns
+  // Legacy fields for compatibility
+  grade_level_name?: string
   enrolled_students?: number
   subjects_count?: number
 }
@@ -58,12 +64,17 @@ export default function ClassesPage() {
         sort_order: 'ASC'
       })
 
-      setClasses(response.data)
+      // Ensure we always set an array for classes
+      const classesData = response.data?.classes || response.data || []
+      setClasses(Array.isArray(classesData) ? classesData : [])
+
       if (response.pagination) {
         setPagination(response.pagination)
       }
     } catch (error) {
       console.error('Error fetching classes:', error)
+      // Ensure classes is always an array even on error
+      setClasses([])
       toast({
         title: "Error",
         description: "Failed to fetch classes. Please try again.",
@@ -80,13 +91,17 @@ export default function ClassesPage() {
 
   const handleAddClass = async (newClassData: any) => {
     try {
-      const newClass = await classesApi.create(newClassData)
-      setClasses(prev => [newClass, ...prev])
+      const response = await classesApi.create(newClassData)
+
       setIsAddModalOpen(false)
       toast({
         title: "Class Added",
-        description: `Class ${newClass.name} has been successfully added.`,
+        description: `Class ${newClassData.name} has been successfully added.`,
       })
+
+      // Refresh the classes list to get updated data with full class objects
+      await fetchClasses()
+
     } catch (error) {
       console.error('Error adding class:', error)
       toast({
@@ -97,16 +112,91 @@ export default function ClassesPage() {
     }
   }
 
-  const handleEditClass = async (updatedClassData: Class) => {
+  // Transform backend Class data to EditModal ClassData format
+  const transformClassForEdit = (cls: Class) => {
+    const transformed = {
+      id: cls.id || '',
+      name: cls.name || '',
+      level: cls.grade_level || 'Not specified',
+      section: cls.section || '',
+      capacity: cls.capacity || 0,
+      enrolled: cls.student_count || 0,
+      classTeacher: cls.class_teacher_name || '',
+      subjects: [], // Backend doesn't provide subjects array, start with empty
+      room: cls.room_number || '',
+      schedule: '', // Backend doesn't provide schedule, start with empty
+      status: (cls.status as "active" | "inactive") || "active",
+      academicYear: cls.academic_year || ''
+    }
+
+    // Debug: Log the transformation
+    console.log('Transform class for edit:', {
+      original: cls,
+      transformed: transformed
+    })
+
+    return transformed
+  }
+
+  const handleEditClass = async (updatedClassData: any) => {
     try {
-      const updatedClass = await classesApi.update(updatedClassData.id, updatedClassData)
-      setClasses(prev => prev.map(cls => cls.id === updatedClass.id ? updatedClass : cls))
+      // Transform the modal data back to backend format
+      const backendData = {
+        name: updatedClassData.name,
+        grade_level: updatedClassData.level,           // level → grade_level
+        section: updatedClassData.section,
+        capacity: updatedClassData.capacity,
+        room_number: updatedClassData.room,            // room → room_number
+        status: updatedClassData.status,
+        // Note: class_teacher_id would need to be resolved from classTeacher name
+        // Note: academic_year_id would need to be resolved from academicYear name
+        // Note: description field is not in the modal currently
+      }
+
+      console.log('🔄 Updating class:', { id: updatedClassData.id, data: backendData })
+
+      // Backend only returns success message, not the updated class
+      const response = await classesApi.update(updatedClassData.id, backendData)
+      console.log('✅ Update response:', response)
+
+      // Update the local state manually since backend doesn't return updated class
+      setClasses(prev => prev.map(cls => {
+        if (cls.id.toString() === updatedClassData.id.toString()) {
+          console.log('🔍 Preserving student_count during update:', {
+            classId: cls.id,
+            className: cls.name,
+            currentStudentCount: cls.student_count,
+            capacity: cls.capacity
+          })
+          // Merge the updated data with existing class data
+          return {
+            ...cls,
+            name: updatedClassData.name,
+            grade_level: updatedClassData.level,           // Update grade_level
+            section: updatedClassData.section || null,
+            capacity: updatedClassData.capacity,
+            room_number: updatedClassData.room,
+            status: updatedClassData.status,
+            academic_year: updatedClassData.academicYear,  // Update academic_year display
+            // ✅ IMPORTANT: Preserve student_count to maintain enrollment display
+            student_count: cls.student_count,              // Keep existing student count
+            // Note: Other fields like class_teacher_name would need proper resolution
+          }
+        }
+        return cls
+      }))
+
       setIsEditModalOpen(false)
       setSelectedClass(null)
       toast({
         title: "Class Updated",
-        description: `Class ${updatedClass.name} has been successfully updated.`,
+        description: `Class ${updatedClassData.name} has been successfully updated.`,
       })
+
+      // ✅ Refresh classes data to ensure student_count and other fields are current
+      console.log('🔄 Refreshing classes data after update...')
+      await fetchClasses()
+
     } catch (error) {
       console.error('Error updating class:', error)
       toast({
@@ -139,12 +229,12 @@ export default function ClassesPage() {
     try {
       const csvData = classes.map(cls => ({
         'Name': cls.name,
-        'Section': cls.section,
-        'Grade Level': cls.grade_level_name || '',
+        'Section': cls.section || '',
+        'Grade Level': cls.grade_level || '',
         'Teacher': cls.class_teacher_name || '',
         'Room': cls.room_number || '',
         'Capacity': cls.capacity,
-        'Enrolled': cls.enrolled_students || 0,
+        'Enrolled': cls.student_count || 0,
         'Status': cls.status,
       }))
 
@@ -181,12 +271,20 @@ export default function ClassesPage() {
       cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
     },
     {
-      accessorKey: "grade_level_name",
+      accessorKey: "grade_level",
       header: "Grade Level",
+      cell: ({ row }) => {
+        const gradeLevel = row.getValue("grade_level") as string
+        return gradeLevel || 'Not assigned'
+      },
     },
     {
       accessorKey: "section",
       header: "Section",
+      cell: ({ row }) => {
+        const section = row.getValue("section") as string
+        return section || 'Not specified'
+      },
     },
     {
       accessorKey: "class_teacher_name",
@@ -205,10 +303,10 @@ export default function ClassesPage() {
       },
     },
     {
-      accessorKey: "enrolled_students",
+      accessorKey: "student_count",
       header: "Enrolled",
       cell: ({ row }) => {
-        const enrolled = row.getValue("enrolled_students") as number || 0
+        const enrolled = row.getValue("student_count") as number || 0
         const capacity = row.original.capacity
         return `${enrolled} / ${capacity}`
       },
@@ -308,7 +406,7 @@ export default function ClassesPage() {
           open={isEditModalOpen}
           onOpenChange={setIsEditModalOpen}
           onEdit={handleEditClass}
-          initialData={selectedClass}
+          initialData={transformClassForEdit(selectedClass)}
         />
       )}
     </div>

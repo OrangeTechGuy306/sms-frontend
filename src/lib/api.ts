@@ -181,6 +181,10 @@ export const studentsApi = {
     return apiCall(() => api.get(`/students/${id}`));
   },
 
+  getAcademicData: async (id: string) => {
+    return apiCall(() => api.get(`/students/${id}/academic`));
+  },
+
   create: async (data: any) => {
     return apiCall(() => api.post('/students', data));
   },

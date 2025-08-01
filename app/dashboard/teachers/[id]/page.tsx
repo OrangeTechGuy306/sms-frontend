@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,7 +42,9 @@ interface Teacher {
   }[]
 }
 
-export default function TeacherDetailsPage({ params }: { params: { id: string } }) {
+export default function TeacherDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  // Unwrap params using React.use()
+  const resolvedParams = use(params)
   const router = useRouter()
   const [teacher, setTeacher] = useState<Teacher | null>(null)
   const [loading, setLoading] = useState(true)
@@ -56,7 +58,7 @@ export default function TeacherDetailsPage({ params }: { params: { id: string } 
       setTimeout(() => {
         // Mock teacher data
         const mockTeacher: Teacher = {
-          id: params.id,
+          id: resolvedParams.id,
           name: "Dr. Robert Wilson",
           subject: "Mathematics",
           contact: "(555) 111-2222",
@@ -119,7 +121,7 @@ export default function TeacherDetailsPage({ params }: { params: { id: string } 
     }
 
     fetchTeacher()
-  }, [params.id])
+  }, [resolvedParams.id])
 
   const handleEditTeacher = (updatedTeacher: Teacher) => {
     setTeacher(updatedTeacher)
